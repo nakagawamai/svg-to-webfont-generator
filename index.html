@@ -436,6 +436,22 @@ details.guide summary:hover {
   white-space: pre;
   overflow-x: auto;
 }
+.guide-image {
+  margin: 12px 0;
+}
+.guide-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.guide-image figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
 .guide-body .step-num {
   display: inline-block;
   width: 22px;
@@ -501,6 +517,11 @@ details.guide summary:hover {
         <div class="ascii-art">数字:    0 1 2 3 4 5 6 7 8 9
 大文字:  A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 小文字:  a b c d e f g h i j k l m n o p q r s t u v w x y z</div>
+
+        <figure class="guide-image">
+          <img src="assets/illustrator-glyph-layout.png" alt="Illustratorで数字をベースラインに揃えてアウトライン化し、順番に並べて選択している例">
+          <figcaption>1文字ずつベースラインを揃えてアウトライン化し、0〜9、A〜Z、a〜z の順で並べてから全て選択した状態でスクリプトを実行します。</figcaption>
+        </figure>
 
         <div class="note">
           <strong>💡 並べ方のポイント</strong><br>
