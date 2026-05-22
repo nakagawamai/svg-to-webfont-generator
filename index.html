@@ -303,6 +303,7 @@ button:disabled {
 }
 .preview-text {
   font-size: 48px;
+  line-height: 1;
   letter-spacing: 0.05em;
   color: var(--text);
   word-break: break-all;
@@ -617,18 +618,6 @@ details.guide summary:hover {
     </div>
   </div>
 
-  <div class="section" id="previewSection" style="display:none;">
-    <div class="section-title">Preview</div>
-    <div class="preview-section" style="margin-top: 0;">
-      <div class="preview-label">プレビュー（このページ上でフォント適用・編集可能）</div>
-      <div class="preview-text" id="previewText" contenteditable="true">0123456789</div>
-    </div>
-    <div class="preview-section">
-      <div class="preview-label">CSS sample</div>
-      <pre class="code-block" id="cssCode"></pre>
-    </div>
-  </div>
-
   <div class="section">
     <div class="section-title">SVG Files</div>
     <div class="dropzone" id="dropzone">
@@ -651,6 +640,18 @@ details.guide summary:hover {
       <div class="help" style="margin-top:8px;">
         各SVGに「割り当てる1文字」を入力してください（例: 0, A, あ）。空欄のものは書き出されません。
       </div>
+    </div>
+  </div>
+
+  <div class="section" id="previewSection" style="display:none;">
+    <div class="section-title">Preview</div>
+    <div class="preview-section" style="margin-top: 0;">
+      <div class="preview-label">プレビュー（このページ上でフォント適用・編集可能）</div>
+      <div class="preview-text" id="previewText" contenteditable="true">0123456789</div>
+    </div>
+    <div class="preview-section">
+      <div class="preview-label">CSS sample</div>
+      <pre class="code-block" id="cssCode"></pre>
     </div>
   </div>
 
