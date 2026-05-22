@@ -446,6 +446,9 @@ details.guide summary:hover {
   border: 1px solid var(--border);
   border-radius: 4px;
 }
+.guide-image.is-half {
+  max-width: 50%;
+}
 .guide-image figcaption {
   margin-top: 6px;
   font-size: 12px;
@@ -493,6 +496,56 @@ details.guide summary:hover {
   display: flex;
   align-items: center;
 }
+.quick-steps {
+  margin-bottom: 16px;
+}
+.quick-steps-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.quick-step {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  min-height: 112px;
+}
+.quick-step-num {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.quick-step-title {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+.quick-step-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.quick-step a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-dim);
+}
+.quick-step a:hover {
+  border-bottom-color: var(--accent);
+}
+@media (max-width: 640px) {
+  .quick-steps-list {
+    grid-template-columns: 1fr;
+  }
+  .guide-image.is-half {
+    max-width: 100%;
+  }
+}
 </style>
 </head>
 <body>
@@ -501,6 +554,33 @@ details.guide summary:hover {
     <h1>SVG <span class="arrow">→</span> WebFont Converter</h1>
     <div class="subtitle">SVGグリフからwoff/ttfを生成します。ブラウザ内で完結、データは外部送信されません。</div>
   </header>
+
+  <div class="quick-steps">
+    <div class="quick-steps-list">
+      <div class="quick-step">
+        <div class="quick-step-num">STEP 1</div>
+        <div class="quick-step-title">SVGデータを作成する</div>
+        <div class="quick-step-desc">
+          <a href="export_glyphs_to_svg_v4.jsx" download>Illustrator用スクリプト</a>を実行、または自前でSVGを作成
+        </div>
+      </div>
+      <div class="quick-step">
+        <div class="quick-step-num">STEP 2</div>
+        <div class="quick-step-title">SVGをインポート</div>
+        <div class="quick-step-desc">作成したSVGファイルをまとめて読み込む</div>
+      </div>
+      <div class="quick-step">
+        <div class="quick-step-num">STEP 3</div>
+        <div class="quick-step-title">1文字ずつ割り当てる</div>
+        <div class="quick-step-desc">各SVGに割り当てる文字を入力。ファイル名から自動採番も可能</div>
+      </div>
+      <div class="quick-step">
+        <div class="quick-step-num">STEP 4</div>
+        <div class="quick-step-title">TTF / WOFFをダウンロード</div>
+        <div class="quick-step-desc">プレビューで確認してからフォントを書き出す</div>
+      </div>
+    </div>
+  </div>
 
   <details class="guide">
     <summary>📖 使い方ガイド（Illustratorからの作成手順を含む）</summary>
@@ -547,7 +627,7 @@ details.guide summary:hover {
               <li>数字 + アルファベット小文字（36文字）</li>
               <li>数字 + アルファベット大文字小文字（62文字）</li>
             </ul>
-            <figure class="guide-image">
+            <figure class="guide-image is-half">
               <img src="assets/illustrator-character-type-dialog.png" alt="Illustrator JSXスクリプトで作成する文字の種類を選択するダイアログ">
               <figcaption>Illustrator上の並びに合わせて、数字のみ、数字 + 大文字、数字 + 小文字、数字 + 大文字小文字から選択します。</figcaption>
             </figure>
@@ -579,6 +659,10 @@ details.guide summary:hover {
               <li>または <strong>「0-9を自動割当」「A-Zを自動割当」「a-zを自動割当」</strong>ボタン</li>
               <li>または各SVGの下の入力欄に手動で1文字ずつ入力</li>
             </ul>
+            <figure class="guide-image">
+              <img src="assets/webfont-tool-svg-files.png" alt="SVGファイルを読み込んでファイル名から文字を自動割り当てした状態の画面">
+              <figcaption>SVGファイルを読み込んだら、ファイル名から自動割り当てして、各グリフに正しい文字が入っているか確認します。</figcaption>
+            </figure>
           </li>
           <li><strong>サイドベアリング</strong>（左右余白）と <strong>グリフ高さ</strong> を調整</li>
           <li><strong>「プレビュー」</strong>で表示確認（数値を変えるとリアルタイム更新）</li>
