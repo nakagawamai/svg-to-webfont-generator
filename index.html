@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG → WebFont Converter</title>
+<style>
+:root {
+  --bg: #1a1a1a;
+  --panel: #232323;
+  --panel-2: #2a2a2a;
+  --border: #3a3a3a;
+  --text: #e8e8e8;
+  --text-dim: #888;
+  --accent: #d4a574;
+  --accent-dim: #8a6a47;
+  --success: #7eb573;
+  --error: #c97070;
+  --code: #1a1a1a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Helvetica Neue", "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 32px 24px;
+}
+
+.container {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 20px;
+}
+
+h1 {
+  font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", monospace;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+h1 .arrow { color: var(--text-dim); font-weight: 300; margin: 0 6px; }
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+.field:last-child { margin-bottom: 0; }
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.field-row .field {
+  margin-bottom: 0;
+}
+
+.field input[type="number"] {
+  width: 100%;
+  background: var(--code);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 13px;
+  border-radius: 4px;
+}
+.field input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.field input[type="text"] {
+  width: 100%;
+  background: var(--code);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 13px;
+  border-radius: 4px;
+}
+.field input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 6px;
+  padding: 36px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--code);
+}
+.dropzone:hover, .dropzone.drag-over {
+  border-color: var(--accent);
+  background: var(--panel-2);
+}
+.dropzone .icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+  color: var(--text-dim);
+}
+.dropzone .label {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.dropzone .hint {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.dropzone input[type="file"] { display: none; }
+
+.file-list {
+  margin-top: 14px;
+}
+
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.file-item {
+  background: var(--code);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 6px;
+  text-align: center;
+  position: relative;
+}
+.file-item.assigned { border-color: var(--accent-dim); }
+
+.file-item .preview {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  background: #f5f1ea;
+  border-radius: 3px;
+  padding: 4px;
+}
+.file-item .preview svg {
+  max-width: 100%;
+  max-height: 100%;
+}
+.file-item .filename {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  word-break: break-all;
+  margin-bottom: 4px;
+}
+.file-item .charcode {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px;
+  width: 100%;
+  padding: 3px;
+  text-align: center;
+  border-radius: 3px;
+}
+.file-item .charcode:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.tools-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+button {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  font-weight: 500;
+  padding: 10px 20px;
+}
+.btn-primary:hover {
+  background: #e0b886;
+  border-color: #e0b886;
+  color: var(--bg);
+}
+
+.btn-recommended {
+  background: var(--panel-2);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+.btn-recommended:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.status {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-right: auto;
+}
+.status.success { color: var(--success); }
+.status.error { color: var(--error); }
+
+.preview-section {
+  background: var(--code);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 18px;
+  margin-top: 12px;
+}
+.preview-section .preview-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.preview-text {
+  font-size: 48px;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.code-block {
+  background: var(--code);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px;
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 12px;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.help {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.toolbar-info {
+  font-size: 11px;
+  color: var(--text-dim);
+  padding: 6px 10px;
+  background: var(--code);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* === Workflow guide === */
+details.guide {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+details.guide summary {
+  padding: 14px 20px;
+  cursor: pointer;
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  user-select: none;
+  transition: background 0.15s;
+}
+details.guide summary::-webkit-details-marker { display: none; }
+details.guide summary::before {
+  content: "▸";
+  color: var(--accent);
+  transition: transform 0.2s;
+  font-size: 10px;
+}
+details.guide[open] summary::before {
+  transform: rotate(90deg);
+}
+details.guide summary:hover {
+  background: var(--panel-2);
+}
+.guide-body {
+  padding: 0 24px 22px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+.guide-body h3 {
+  font-size: 13px;
+  color: var(--accent);
+  margin: 18px 0 8px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.guide-body h3:first-child { margin-top: 0; }
+.guide-body ol, .guide-body ul {
+  margin: 8px 0 8px 22px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.8;
+}
+.guide-body li { margin-bottom: 4px; }
+.guide-body p {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+  margin: 8px 0;
+}
+.guide-body .note {
+  background: var(--code);
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  margin: 12px 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  border-radius: 3px;
+}
+.guide-body .note strong {
+  color: var(--accent);
+  font-weight: 500;
+}
+.guide-body code {
+  background: var(--code);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px;
+  color: var(--accent);
+  border-radius: 3px;
+}
+.guide-body .ascii-art {
+  background: var(--code);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 10px 0;
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+}
+.guide-body .step-num {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background: var(--accent);
+  color: var(--bg);
+  text-align: center;
+  line-height: 22px;
+  border-radius: 50%;
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.guide-section {
+  margin: 16px 0;
+}
+.btn-jsx {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--bg);
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-jsx:hover {
+  background: #e0b886;
+  border-color: #e0b886;
+}
+.guide-section-title {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>SVG <span class="arrow">→</span> WebFont Converter</h1>
+    <div class="subtitle">SVGグリフからwoff/ttfを生成します。ブラウザ内で完結、データは外部送信されません。</div>
+  </header>
+
+  <details class="guide">
+    <summary>📖 使い方ガイド（Illustratorからの作成手順を含む）</summary>
+    <div class="guide-body">
+
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="step-num">1</span>Illustratorで文字を準備する</div>
+        <ol>
+          <li>1書体ぶんの文字をアートボードに配置（文字 → アウトラインを作成 で全てパス化しておく）</li>
+          <li>すべての文字を同じサイズ・同じベースラインで揃える</li>
+          <li>下記の順で <strong>アルファベット順 / 数字順</strong> に並べる：</li>
+        </ol>
+
+        <div class="ascii-art">数字:    0 1 2 3 4 5 6 7 8 9
+大文字:  A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+小文字:  a b c d e f g h i j k l m n o p q r s t u v w x y z</div>
+
+        <div class="note">
+          <strong>💡 並べ方のポイント</strong><br>
+          複数行に分かれていてもOK（行ごとに上から順に処理されます）。<br>
+          数字 + 大文字 + 小文字をまとめて作るときは、行ごとに種類を分けると分かりやすいです。
+        </div>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="step-num">2</span>JSXスクリプトを実行してSVGを書き出す</div>
+        <ol>
+          <li>Illustratorで対象の文字をすべて選択</li>
+          <li>下のボタンからJSXスクリプトをダウンロード：
+            <div style="margin: 10px 0;">
+              <button type="button" id="downloadJsxBtn" class="btn-jsx">📥 export_glyphs_to_svg_v4.jsx をダウンロード</button>
+            </div>
+          </li>
+          <li><code>ファイル → スクリプト → その他のスクリプト...</code> から <code>export_glyphs_to_svg_v4.jsx</code> を実行</li>
+          <li>表示されるダイアログで <strong>作成する文字の種類</strong> を選択：
+            <ul>
+              <li>数字のみ（10文字）</li>
+              <li>数字 + アルファベット大文字（36文字）</li>
+              <li>数字 + アルファベット小文字（36文字）</li>
+              <li>数字 + アルファベット大文字小文字（62文字）</li>
+            </ul>
+          </li>
+          <li>「次へ」→ 書き出し先フォルダを選択</li>
+          <li>選んだフォルダに <code>0.svg</code>, <code>1.svg</code>... <code>A.svg</code>... が自動命名で書き出される</li>
+        </ol>
+
+        <div class="note">
+          <strong>📁 ファイル名のルール</strong><br>
+          ・数字のみ・大文字のみ・小文字のみ: <code>0.svg</code>, <code>A.svg</code>, <code>a.svg</code><br>
+          ・大文字小文字の両方を含む場合: <code>upper_A.svg</code>, <code>lower_a.svg</code>（OSの大小区別問題を回避するため）
+        </div>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="step-num">3</span>このツールでフォント化する</div>
+        <ol>
+          <li><strong>フォント名</strong> を入力（CSSの <code>font-family</code> 名になる）</li>
+          <li>書き出したSVGファイルをすべて選択して <strong>下のドロップエリア</strong> にドラッグ&ドロップ</li>
+          <li>文字を割り当てる：
+            <ul>
+              <li><strong>「ファイル名から自動」</strong>ボタン → ファイル名の頭文字を自動で割り当て（推奨）</li>
+              <li>または <strong>「0-9を自動割当」「A-Zを自動割当」「a-zを自動割当」</strong>ボタン</li>
+              <li>または各SVGの下の入力欄に手動で1文字ずつ入力</li>
+            </ul>
+          </li>
+          <li><strong>サイドベアリング</strong>（左右余白）と <strong>グリフ高さ</strong> を調整</li>
+          <li><strong>「プレビュー」</strong>で表示確認（数値を変えるとリアルタイム更新）</li>
+          <li><strong>「WOFF DL」</strong>または <strong>「TTF DL」</strong>で書き出し</li>
+        </ol>
+
+        <div class="note">
+          <strong>💡 ファイル名からの自動割当について</strong><br>
+          「ファイル名から自動」ボタンは <code>upper_A.svg</code> → <code>A</code>、<code>lower_a.svg</code> → <code>a</code> のように<br>
+          プレフィックスを認識して正しく文字を割り当てます。
+        </div>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="step-num">4</span>Webサイトで使う</div>
+        <p>ダウンロードしたフォントファイルを使うCSS例：</p>
+        <pre class="code-block">@font-face {
+  font-family: 'MyFont';
+  src: url('MyFont.woff') format('woff'),
+       url('MyFont.ttf') format('truetype');
+  font-display: swap;
+}
+
+.my-text {
+  font-family: 'MyFont', sans-serif;
+}</pre>
+        <p>HTMLでは普通にテキストを書くだけで、対応する文字がオリジナルフォントで表示されます。</p>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="step-num">?</span>うまくいかないとき</div>
+        <ul>
+          <li><strong>プレビューで文字がくっつく</strong> → サイドベアリングを大きくする（5〜10%が目安）</li>
+          <li><strong>文字が大きすぎる/小さすぎる</strong> → グリフ高さ %を調整</li>
+          <li><strong>ベースラインがバラバラ</strong> → Illustratorで全文字を同じベースラインに揃え直す</li>
+          <li><strong>SVGに文字データが残ってない</strong> → アウトライン化を忘れている可能性。<code>書式 → アウトラインを作成</code></li>
+          <li><strong>WOFFが生成されない</strong> → ネット接続を確認（pakoライブラリのCDN読み込みが必要）</li>
+        </ul>
+      </div>
+
+    </div>
+  </details>
+
+  <div class="section">
+    <div class="section-title">Font Settings</div>
+    <div class="field">
+      <label>フォント名</label>
+      <input type="text" id="fontName" value="MyFont" placeholder="例: fontA">
+      <div class="help">CSSの font-family で使う名前です</div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>左サイドベアリング (%)</label>
+        <input type="number" id="leftBearing" value="5" min="0" max="50" step="1">
+        <div class="help">グリフ左の余白(em高さに対する%)</div>
+      </div>
+      <div class="field">
+        <label>右サイドベアリング (%)</label>
+        <input type="number" id="rightBearing" value="5" min="0" max="50" step="1">
+        <div class="help">グリフ右の余白(em高さに対する%)</div>
+      </div>
+      <div class="field">
+        <label>グリフ高さ (%)</label>
+        <input type="number" id="glyphHeightPct" value="80" min="40" max="100" step="5">
+        <div class="help">em内で使う高さ(残りはベースライン下余白)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="previewSection" style="display:none;">
+    <div class="section-title">Preview</div>
+    <div class="preview-section" style="margin-top: 0;">
+      <div class="preview-label">プレビュー（このページ上でフォント適用・編集可能）</div>
+      <div class="preview-text" id="previewText" contenteditable="true">0123456789</div>
+    </div>
+    <div class="preview-section">
+      <div class="preview-label">CSS sample</div>
+      <pre class="code-block" id="cssCode"></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">SVG Files</div>
+    <div class="dropzone" id="dropzone">
+      <div class="icon">⤓</div>
+      <div class="label">SVGファイルをドラッグ&ドロップ</div>
+      <div class="hint">またはクリックして選択（複数選択可）</div>
+      <input type="file" id="fileInput" accept=".svg" multiple>
+    </div>
+
+    <div class="file-list" id="fileList" style="display:none;">
+      <div class="tools-row">
+        <button id="autoFromFilename" type="button" class="btn-recommended">★ ファイル名から自動</button>
+        <button id="autoAssignNumbers" type="button">0-9を自動割当</button>
+        <button id="autoAssignAlpha" type="button">A-Zを自動割当</button>
+        <button id="autoAssignAlphaLower" type="button">a-zを自動割当</button>
+        <button id="clearAll" type="button">クリア</button>
+        <span class="toolbar-info" id="fileCount">0 files</span>
+      </div>
+      <div class="file-grid" id="fileGrid"></div>
+      <div class="help" style="margin-top:8px;">
+        各SVGに「割り当てる1文字」を入力してください（例: 0, A, あ）。空欄のものは書き出されません。
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Generate</div>
+    <div class="btn-row">
+      <span class="status" id="status">準備完了</span>
+      <button id="previewBtn" type="button">プレビュー更新</button>
+      <button id="downloadTtfBtn" type="button">TTF DL</button>
+      <button id="downloadWoffBtn" type="button" class="btn-primary">WOFF DL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Libraries: load before app script so they are available immediately -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+
+<script>
+// ===== State =====
+const state = {
+  files: [], // { name, content, charAssign, svgEl, viewBox, paths }
+};
+
+const $ = id => document.getElementById(id);
+
+// ===== File handling =====
+const dropzone = $('dropzone');
+const fileInput = $('fileInput');
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropzone.classList.add('drag-over');
+});
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+async function handleFiles(fileList) {
+  const svgFiles = Array.from(fileList).filter(f =>
+    f.name.toLowerCase().endsWith('.svg')
+  );
+  if (svgFiles.length === 0) {
+    setStatus('SVGファイルが見つかりません', 'error');
+    return;
+  }
+
+  // Sort by filename (natural sort for numbers)
+  svgFiles.sort((a, b) => {
+    return a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'});
+  });
+
+  for (const file of svgFiles) {
+    const content = await file.text();
+    const parsed = parseSvg(content);
+    state.files.push({
+      name: file.name,
+      content,
+      charAssign: '',
+      ...parsed
+    });
+  }
+  renderFileList();
+  setStatus(`${state.files.length}個のSVGを読み込みました`, 'success');
+}
+
+function parseSvg(svgText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgText, 'image/svg+xml');
+  const svg = doc.documentElement;
+
+  let viewBox = svg.getAttribute('viewBox');
+  if (viewBox) {
+    viewBox = viewBox.split(/[\s,]+/).map(Number);
+  } else {
+    const w = parseFloat(svg.getAttribute('width')) || 100;
+    const h = parseFloat(svg.getAttribute('height')) || 100;
+    viewBox = [0, 0, w, h];
+  }
+
+  // Collect all path d attributes (also from polygon, rect, circle: convert simply)
+  const pathData = [];
+  svg.querySelectorAll('path').forEach(p => {
+    const d = p.getAttribute('d');
+    if (d) pathData.push(d);
+  });
+  svg.querySelectorAll('polygon').forEach(p => {
+    const points = p.getAttribute('points');
+    if (points) {
+      const pts = points.trim().split(/[\s,]+/).map(Number);
+      let d = '';
+      for (let i = 0; i < pts.length; i += 2) {
+        d += (i === 0 ? 'M' : 'L') + pts[i] + ',' + pts[i+1];
+      }
+      d += 'Z';
+      pathData.push(d);
+    }
+  });
+  svg.querySelectorAll('polyline').forEach(p => {
+    const points = p.getAttribute('points');
+    if (points) {
+      const pts = points.trim().split(/[\s,]+/).map(Number);
+      let d = '';
+      for (let i = 0; i < pts.length; i += 2) {
+        d += (i === 0 ? 'M' : 'L') + pts[i] + ',' + pts[i+1];
+      }
+      pathData.push(d);
+    }
+  });
+  svg.querySelectorAll('rect').forEach(r => {
+    const x = parseFloat(r.getAttribute('x') || 0);
+    const y = parseFloat(r.getAttribute('y') || 0);
+    const w = parseFloat(r.getAttribute('width') || 0);
+    const h = parseFloat(r.getAttribute('height') || 0);
+    if (w > 0 && h > 0) {
+      pathData.push(`M${x},${y}L${x+w},${y}L${x+w},${y+h}L${x},${y+h}Z`);
+    }
+  });
+
+  return { viewBox, pathData };
+}
+
+function renderFileList() {
+  const grid = $('fileGrid');
+  const list = $('fileList');
+  if (state.files.length === 0) {
+    list.style.display = 'none';
+    return;
+  }
+  list.style.display = 'block';
+  $('fileCount').textContent = `${state.files.length} files`;
+
+  grid.innerHTML = '';
+  state.files.forEach((file, idx) => {
+    const item = document.createElement('div');
+    item.className = 'file-item' + (file.charAssign ? ' assigned' : '');
+
+    // Render preview from SVG content
+    item.innerHTML = `
+      <div class="preview">${file.content}</div>
+      <div class="filename" title="${file.name}">${file.name}</div>
+      <input type="text" class="charcode" maxlength="1" value="${file.charAssign}" data-idx="${idx}" placeholder="?">
+    `;
+    grid.appendChild(item);
+  });
+
+  // Bind change events
+  grid.querySelectorAll('.charcode').forEach(input => {
+    input.addEventListener('input', e => {
+      const idx = parseInt(e.target.dataset.idx);
+      state.files[idx].charAssign = e.target.value;
+      e.target.closest('.file-item').classList.toggle('assigned', !!e.target.value);
+      // 手動入力でもプレビューを更新
+      triggerPreviewUpdate();
+    });
+  });
+}
+
+// ===== プレビュー自動更新トリガー =====
+// 文字割当後に呼ぶと、自動でプレビューを開く/更新する
+function triggerPreviewUpdate() {
+  const hasAssigned = state.files.some(f => f.charAssign);
+  if (!hasAssigned) return;
+  // デバウンスして連続呼び出しをまとめる
+  clearTimeout(window._previewDebounce);
+  window._previewDebounce = setTimeout(() => {
+    $('previewBtn').click();
+  }, 300);
+}
+
+// ===== Auto-assign helpers =====
+function autoAssign(chars) {
+  for (let i = 0; i < state.files.length && i < chars.length; i++) {
+    state.files[i].charAssign = chars[i];
+  }
+  renderFileList();
+  triggerPreviewUpdate();
+}
+
+$('autoAssignNumbers').addEventListener('click', () => autoAssign('0123456789'));
+$('autoAssignAlpha').addEventListener('click', () => autoAssign('ABCDEFGHIJKLMNOPQRSTUVWXYZ'));
+$('autoAssignAlphaLower').addEventListener('click', () => autoAssign('abcdefghijklmnopqrstuvwxyz'));
+$('autoFromFilename').addEventListener('click', () => {
+  state.files.forEach(f => {
+    // Remove extension
+    let base = f.name.replace(/\.svg$/i, '');
+
+    // Handle prefixes: upper_X -> X (uppercase), lower_X -> X (lowercase)
+    if (/^upper_/i.test(base)) {
+      const rest = base.replace(/^upper_/i, '');
+      f.charAssign = rest.charAt(0).toUpperCase();
+    } else if (/^lower_/i.test(base)) {
+      const rest = base.replace(/^lower_/i, '');
+      f.charAssign = rest.charAt(0).toLowerCase();
+    } else {
+      // Default: use the first character of the filename
+      f.charAssign = base.charAt(0);
+    }
+  });
+  renderFileList();
+  triggerPreviewUpdate();
+});
+
+$('clearAll').addEventListener('click', () => {
+  if (confirm('読み込んだファイルをすべてクリアしますか？')) {
+    state.files = [];
+    renderFileList();
+    // プレビューも隠す
+    $('previewSection').style.display = 'none';
+    setStatus('クリアしました');
+  }
+});
+
+// ===== Status =====
+function setStatus(msg, type = '') {
+  const el = $('status');
+  el.textContent = msg;
+  el.className = 'status ' + type;
+}
+
+// ===== Font generation using opentype.js =====
+function buildFont() {
+  const fontName = $('fontName').value.trim() || 'MyFont';
+  const leftBearingPct = parseFloat($('leftBearing').value) || 0;
+  const rightBearingPct = parseFloat($('rightBearing').value) || 0;
+  const glyphHeightPct = parseFloat($('glyphHeightPct').value) || 80;
+
+  const assignedFiles = state.files.filter(f => f.charAssign);
+
+  if (assignedFiles.length === 0) {
+    throw new Error('文字が割り当てられたSVGが1つもありません');
+  }
+
+  const unitsPerEm = 1000;
+
+  // Find global vertical bounds
+  let maxHeight = 0;
+  assignedFiles.forEach(f => {
+    const h = f.viewBox[3];
+    if (h > maxHeight) maxHeight = h;
+  });
+
+  // Scale: max SVG height -> (glyphHeightPct)% of em
+  const scale = (unitsPerEm * glyphHeightPct / 100) / maxHeight;
+
+  // Ascender/descender layout
+  // Use glyphHeightPct for ascender, the rest goes to descender area
+  const ascender = unitsPerEm * glyphHeightPct / 100;
+  const descender = -(unitsPerEm * (100 - glyphHeightPct) / 100);
+
+  // Side bearings in font units (em-based percentage)
+  const leftSideBearing = Math.round(unitsPerEm * leftBearingPct / 100);
+  const rightSideBearing = Math.round(unitsPerEm * rightBearingPct / 100);
+
+  // .notdef glyph
+  const notdefPath = new opentype.Path();
+  notdefPath.moveTo(100, 0);
+  notdefPath.lineTo(100, 700);
+  notdefPath.lineTo(600, 700);
+  notdefPath.lineTo(600, 0);
+  notdefPath.lineTo(100, 0);
+  notdefPath.close();
+  notdefPath.moveTo(150, 50);
+  notdefPath.lineTo(550, 50);
+  notdefPath.lineTo(550, 650);
+  notdefPath.lineTo(150, 650);
+  notdefPath.lineTo(150, 50);
+  notdefPath.close();
+  const notdefGlyph = new opentype.Glyph({
+    name: '.notdef',
+    unicode: 0,
+    advanceWidth: 700,
+    path: notdefPath
+  });
+
+  const glyphs = [notdefGlyph];
+
+  for (const file of assignedFiles) {
+    const char = file.charAssign;
+    const unicode = char.codePointAt(0);
+
+    const [vbX, vbY, vbW, vbH] = file.viewBox;
+    const glyphWidthInFont = vbW * scale;
+    const glyphHeightInFont = vbH * scale;
+
+    const otPath = new opentype.Path();
+
+    for (const d of file.pathData) {
+      // ベースライン揃え:
+      // SVGのviewBox下端 = フォントのベースライン(y=0)
+      // SVGのviewBox上端 = ベースラインから上に glyphHeightInFont の位置
+      //
+      // SVG座標(x, y): xは右へ正、yは下へ正
+      // フォント座標(x, y): xは右へ正、yは上へ正
+      //
+      // SVG (vbX, vbY+vbH) → フォント (leftSideBearing, 0)         (下端→ベースライン)
+      // SVG (vbX, vbY)      → フォント (leftSideBearing, glyphHeightInFont)  (上端→ベースラインから上)
+      //
+      // 変換式: fontX = (svgX - vbX) * scale + leftSideBearing
+      //        fontY = (vbY + vbH - svgY) * scale  ← Y反転
+      convertSvgPathToOpentype(d, otPath, {
+        scale: scale,
+        offsetX: -vbX * scale + leftSideBearing,
+        offsetY: (vbY + vbH) * scale, // baseline=0からの差分用
+        flipY: true
+      });
+    }
+
+    // advanceWidth = leftBearing + glyph width + rightBearing
+    const advanceWidth = Math.round(leftSideBearing + glyphWidthInFont + rightSideBearing);
+
+    glyphs.push(new opentype.Glyph({
+      name: 'u' + unicode.toString(16).toUpperCase().padStart(4, '0'),
+      unicode: unicode,
+      advanceWidth: advanceWidth,
+      path: otPath
+    }));
+  }
+
+  const font = new opentype.Font({
+    familyName: fontName,
+    styleName: 'Regular',
+    unitsPerEm: unitsPerEm,
+    ascender: ascender,
+    descender: descender,
+    glyphs: glyphs
+  });
+
+  return font;
+}
+
+// Simple SVG path "d" parser & converter to opentype.Path
+function convertSvgPathToOpentype(d, otPath, opts) {
+  const { scale, offsetX, offsetY, flipY } = opts;
+
+  // Parse the d attribute
+  const tokens = d.match(/[a-zA-Z]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || [];
+
+  let i = 0;
+  let cx = 0, cy = 0; // current point (SVG coords)
+  let startX = 0, startY = 0;
+  let cmd = '';
+  let prevCmd = '';
+  let prevCtrlX = null, prevCtrlY = null; // for S/T smooth curves
+
+  const tx = (x) => x * scale + offsetX;
+  const ty = (y) => flipY ? (offsetY - y * scale) : (offsetY + y * scale);
+
+  const readNum = () => parseFloat(tokens[i++]);
+  const isCmd = (t) => /^[a-zA-Z]$/.test(t);
+
+  while (i < tokens.length) {
+    let token = tokens[i];
+    if (isCmd(token)) {
+      cmd = token;
+      i++;
+    }
+    // else: implicit repeat of previous command
+
+    const rel = cmd >= 'a' && cmd <= 'z';
+    const upperCmd = cmd.toUpperCase();
+
+    switch (upperCmd) {
+      case 'M': {
+        let x = readNum(), y = readNum();
+        if (rel) { x += cx; y += cy; }
+        cx = x; cy = y;
+        startX = x; startY = y;
+        otPath.moveTo(tx(x), ty(y));
+        // Implicit subsequent pairs are L
+        cmd = rel ? 'l' : 'L';
+        break;
+      }
+      case 'L': {
+        let x = readNum(), y = readNum();
+        if (rel) { x += cx; y += cy; }
+        cx = x; cy = y;
+        otPath.lineTo(tx(x), ty(y));
+        break;
+      }
+      case 'H': {
+        let x = readNum();
+        if (rel) x += cx;
+        cx = x;
+        otPath.lineTo(tx(x), ty(cy));
+        break;
+      }
+      case 'V': {
+        let y = readNum();
+        if (rel) y += cy;
+        cy = y;
+        otPath.lineTo(tx(cx), ty(y));
+        break;
+      }
+      case 'C': {
+        let x1 = readNum(), y1 = readNum();
+        let x2 = readNum(), y2 = readNum();
+        let x = readNum(), y = readNum();
+        if (rel) { x1 += cx; y1 += cy; x2 += cx; y2 += cy; x += cx; y += cy; }
+        otPath.curveTo(tx(x1), ty(y1), tx(x2), ty(y2), tx(x), ty(y));
+        prevCtrlX = x2; prevCtrlY = y2;
+        cx = x; cy = y;
+        break;
+      }
+      case 'S': {
+        let x2 = readNum(), y2 = readNum();
+        let x = readNum(), y = readNum();
+        if (rel) { x2 += cx; y2 += cy; x += cx; y += cy; }
+        // Reflect previous control point
+        let x1, y1;
+        if (prevCmd === 'C' || prevCmd === 'S') {
+          x1 = 2 * cx - prevCtrlX;
+          y1 = 2 * cy - prevCtrlY;
+        } else {
+          x1 = cx; y1 = cy;
+        }
+        otPath.curveTo(tx(x1), ty(y1), tx(x2), ty(y2), tx(x), ty(y));
+        prevCtrlX = x2; prevCtrlY = y2;
+        cx = x; cy = y;
+        break;
+      }
+      case 'Q': {
+        let x1 = readNum(), y1 = readNum();
+        let x = readNum(), y = readNum();
+        if (rel) { x1 += cx; y1 += cy; x += cx; y += cy; }
+        otPath.quadraticCurveTo(tx(x1), ty(y1), tx(x), ty(y));
+        prevCtrlX = x1; prevCtrlY = y1;
+        cx = x; cy = y;
+        break;
+      }
+      case 'T': {
+        let x = readNum(), y = readNum();
+        if (rel) { x += cx; y += cy; }
+        let x1, y1;
+        if (prevCmd === 'Q' || prevCmd === 'T') {
+          x1 = 2 * cx - prevCtrlX;
+          y1 = 2 * cy - prevCtrlY;
+        } else {
+          x1 = cx; y1 = cy;
+        }
+        otPath.quadraticCurveTo(tx(x1), ty(y1), tx(x), ty(y));
+        prevCtrlX = x1; prevCtrlY = y1;
+        cx = x; cy = y;
+        break;
+      }
+      case 'A': {
+        // Arc to cubic conversion (approximation)
+        let rx = readNum(), ry = readNum();
+        let xRot = readNum();
+        let largeArc = readNum(), sweep = readNum();
+        let x = readNum(), y = readNum();
+        if (rel) { x += cx; y += cy; }
+        const curves = arcToCubic(cx, cy, x, y, rx, ry, xRot, largeArc, sweep);
+        for (const c of curves) {
+          otPath.curveTo(tx(c[0]), ty(c[1]), tx(c[2]), ty(c[3]), tx(c[4]), ty(c[5]));
+        }
+        cx = x; cy = y;
+        break;
+      }
+      case 'Z': {
+        otPath.close();
+        cx = startX; cy = startY;
+        break;
+      }
+    }
+    prevCmd = upperCmd;
+  }
+}
+
+// Approximate SVG arc with cubic Bezier curves
+function arcToCubic(x1, y1, x2, y2, rx, ry, angle, largeArcFlag, sweepFlag) {
+  const PI = Math.PI;
+  const sin = Math.sin, cos = Math.cos, abs = Math.abs, sqrt = Math.sqrt;
+  const rad = angle * PI / 180;
+
+  if (rx === 0 || ry === 0) return [[x1, y1, x2, y2, x2, y2]];
+
+  rx = abs(rx); ry = abs(ry);
+
+  const dx2 = (x1 - x2) / 2;
+  const dy2 = (y1 - y2) / 2;
+
+  const x1p = cos(rad) * dx2 + sin(rad) * dy2;
+  const y1p = -sin(rad) * dx2 + cos(rad) * dy2;
+
+  let rxs = rx * rx, rys = ry * ry;
+  const x1ps = x1p * x1p, y1ps = y1p * y1p;
+  const lambda = x1ps / rxs + y1ps / rys;
+  if (lambda > 1) {
+    const s = sqrt(lambda);
+    rx *= s; ry *= s;
+    rxs = rx * rx; rys = ry * ry;
+  }
+
+  const sign = (largeArcFlag === sweepFlag) ? -1 : 1;
+  const sq = Math.max(0, (rxs * rys - rxs * y1ps - rys * x1ps) / (rxs * y1ps + rys * x1ps));
+  const coef = sign * sqrt(sq);
+  const cxp = coef * (rx * y1p) / ry;
+  const cyp = coef * -(ry * x1p) / rx;
+
+  const cx = cos(rad) * cxp - sin(rad) * cyp + (x1 + x2) / 2;
+  const cy = sin(rad) * cxp + cos(rad) * cyp + (y1 + y2) / 2;
+
+  const ang = (ux, uy, vx, vy) => {
+    const dot = ux * vx + uy * vy;
+    const mag = sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy));
+    let a = Math.acos(Math.max(-1, Math.min(1, dot / mag)));
+    if ((ux * vy - uy * vx) < 0) a = -a;
+    return a;
+  };
+
+  const theta1 = ang(1, 0, (x1p - cxp) / rx, (y1p - cyp) / ry);
+  let deltaTheta = ang((x1p - cxp) / rx, (y1p - cyp) / ry, (-x1p - cxp) / rx, (-y1p - cyp) / ry);
+
+  if (!sweepFlag && deltaTheta > 0) deltaTheta -= 2 * PI;
+  else if (sweepFlag && deltaTheta < 0) deltaTheta += 2 * PI;
+
+  // Split into segments of <= 90deg
+  const segs = Math.ceil(abs(deltaTheta) / (PI / 2));
+  const dT = deltaTheta / segs;
+  const result = [];
+  const t = (4 / 3) * Math.tan(dT / 4);
+
+  let startTheta = theta1;
+  let startX = x1, startY = y1;
+
+  for (let i = 0; i < segs; i++) {
+    const endTheta = startTheta + dT;
+    const cosS = cos(startTheta), sinS = sin(startTheta);
+    const cosE = cos(endTheta), sinE = sin(endTheta);
+
+    const endX = cos(rad) * rx * cosE - sin(rad) * ry * sinE + cx;
+    const endY = sin(rad) * rx * cosE + cos(rad) * ry * sinE + cy;
+
+    const c1x_local = cosS - t * sinS;
+    const c1y_local = sinS + t * cosS;
+    const c2x_local = cosE + t * sinE;
+    const c2y_local = sinE - t * cosE;
+
+    const c1x = cos(rad) * rx * c1x_local - sin(rad) * ry * c1y_local + cx;
+    const c1y = sin(rad) * rx * c1x_local + cos(rad) * ry * c1y_local + cy;
+    const c2x = cos(rad) * rx * c2x_local - sin(rad) * ry * c2y_local + cx;
+    const c2y = sin(rad) * rx * c2x_local + cos(rad) * ry * c2y_local + cy;
+
+    result.push([c1x, c1y, c2x, c2y, endX, endY]);
+
+    startTheta = endTheta;
+    startX = endX; startY = endY;
+  }
+
+  return result;
+}
+
+// ===== Download helpers =====
+function downloadArrayBuffer(buffer, filename, mimeType) {
+  const blob = new Blob([buffer], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// TTF to WOFF conversion
+// WOFF spec: https://www.w3.org/TR/WOFF/
+function ttfToWoff(ttfBuffer) {
+  const ttf = new Uint8Array(ttfBuffer);
+  const dv = new DataView(ttfBuffer);
+
+  // TTF header: sfnt version(4), numTables(2), searchRange(2), entrySelector(2), rangeShift(2)
+  const numTables = dv.getUint16(4);
+  const tables = [];
+  let offset = 12;
+  for (let i = 0; i < numTables; i++) {
+    const tag = ttf.slice(offset, offset + 4);
+    const checksum = dv.getUint32(offset + 4);
+    const tableOffset = dv.getUint32(offset + 8);
+    const length = dv.getUint32(offset + 12);
+    tables.push({ tag, checksum, offset: tableOffset, length });
+    offset += 16;
+  }
+
+  // Compress each table with deflate (we'll use the browser's CompressionStream if available)
+  // For simplicity here, use the "no compression" path: WOFF allows uncompressed tables
+  // (compLength == origLength means uncompressed)
+  // For better size, we should compress with zlib (deflate), but doing it sync requires a library.
+  // Strategy: use pako if available, otherwise store uncompressed.
+
+  const useCompression = typeof pako !== 'undefined';
+
+  const woffTables = [];
+  let dataOffset = 44 + tables.length * 20; // WOFF header(44) + directory(20*numTables)
+
+  for (const t of tables) {
+    const tableData = ttf.slice(t.offset, t.offset + t.length);
+    let compData;
+    if (useCompression) {
+      compData = pako.deflate(tableData);
+      if (compData.length >= tableData.length) {
+        compData = tableData; // store uncompressed if no benefit
+      }
+    } else {
+      compData = tableData;
+    }
+    woffTables.push({
+      tag: t.tag,
+      checksum: t.checksum,
+      origLength: t.length,
+      compData: compData,
+      offset: dataOffset
+    });
+    dataOffset += compData.length;
+    // Pad to 4-byte boundary
+    while (dataOffset % 4 !== 0) dataOffset++;
+  }
+
+  const totalLength = dataOffset;
+  const woff = new ArrayBuffer(totalLength);
+  const woffView = new DataView(woff);
+  const woffU8 = new Uint8Array(woff);
+
+  // WOFF Header
+  // signature: 0x774F4646 ('wOFF')
+  woffView.setUint32(0, 0x774F4646);
+  // flavor: copy sfnt version from TTF
+  woffView.setUint32(4, dv.getUint32(0));
+  // length
+  woffView.setUint32(8, totalLength);
+  // numTables
+  woffView.setUint16(12, numTables);
+  // reserved
+  woffView.setUint16(14, 0);
+  // totalSfntSize
+  let sfntSize = 12 + numTables * 16;
+  for (const t of tables) {
+    sfntSize += t.length;
+    while (sfntSize % 4 !== 0) sfntSize++;
+  }
+  woffView.setUint32(16, sfntSize);
+  // majorVersion, minorVersion
+  woffView.setUint16(20, 1);
+  woffView.setUint16(22, 0);
+  // metaOffset, metaLength, metaOrigLength
+  woffView.setUint32(24, 0);
+  woffView.setUint32(28, 0);
+  woffView.setUint32(32, 0);
+  // privOffset, privLength
+  woffView.setUint32(36, 0);
+  woffView.setUint32(40, 0);
+
+  // Table directory
+  let dirOffset = 44;
+  for (const t of woffTables) {
+    woffU8.set(t.tag, dirOffset);
+    woffView.setUint32(dirOffset + 4, t.offset);
+    woffView.setUint32(dirOffset + 8, t.compData.length);
+    woffView.setUint32(dirOffset + 12, t.origLength);
+    woffView.setUint32(dirOffset + 16, t.checksum);
+    dirOffset += 20;
+  }
+
+  // Table data
+  for (const t of woffTables) {
+    woffU8.set(t.compData, t.offset);
+  }
+
+  return woff;
+}
+
+// ===== Live update preview when settings change =====
+['leftBearing', 'rightBearing', 'glyphHeightPct', 'fontName'].forEach(id => {
+  $(id).addEventListener('input', () => {
+    triggerPreviewUpdate();
+  });
+});
+
+// ===== Buttons =====
+$('previewBtn').addEventListener('click', () => {
+  try {
+    const font = buildFont();
+    const ttfBuffer = font.toArrayBuffer();
+    const fontName = $('fontName').value.trim() || 'MyFont';
+
+    // Inject @font-face dynamically
+    const blob = new Blob([ttfBuffer], { type: 'font/ttf' });
+    const url = URL.createObjectURL(blob);
+    const styleId = 'preview-font-style';
+    let style = document.getElementById(styleId);
+    if (style) style.remove();
+    style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      @font-face {
+        font-family: '${fontName}_preview';
+        src: url('${url}') format('truetype');
+      }
+      .preview-text { font-family: '${fontName}_preview', sans-serif !important; }
+    `;
+    document.head.appendChild(style);
+
+    // Show preview area
+    $('previewSection').style.display = 'block';
+
+    // Pre-fill preview text with assigned chars
+    const assignedChars = state.files.filter(f => f.charAssign).map(f => f.charAssign).join('');
+    if (assignedChars) {
+      $('previewText').textContent = assignedChars;
+    }
+
+    // CSS sample
+    $('cssCode').textContent = `@font-face {
+  font-family: '${fontName}';
+  src: url('${fontName}.woff2') format('woff2'),
+       url('${fontName}.woff') format('woff'),
+       url('${fontName}.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.${fontName.toLowerCase()} {
+  font-family: '${fontName}', sans-serif;
+}`;
+
+    setStatus('プレビュー生成完了', 'success');
+  } catch (e) {
+    setStatus('エラー: ' + e.message, 'error');
+    console.error(e);
+  }
+});
+
+$('downloadTtfBtn').addEventListener('click', () => {
+  try {
+    const fontName = $('fontName').value.trim() || 'MyFont';
+    setStatus('TTF生成中...', '');
+    const font = buildFont();
+    const ttfBuffer = font.toArrayBuffer();
+    downloadArrayBuffer(ttfBuffer, `${fontName}.ttf`, 'font/ttf');
+    setStatus(`${fontName}.ttf (${formatBytes(ttfBuffer.byteLength)}) をDLしました`, 'success');
+  } catch (e) {
+    setStatus('エラー: ' + e.message, 'error');
+    console.error(e);
+  }
+});
+
+$('downloadWoffBtn').addEventListener('click', () => {
+  try {
+    const fontName = $('fontName').value.trim() || 'MyFont';
+    setStatus('WOFF生成中...', '');
+
+    const font = buildFont();
+    const ttfBuffer = font.toArrayBuffer();
+
+    if (typeof pako === 'undefined') {
+      setStatus('pakoライブラリが読み込まれていません。ネット接続を確認してください。', 'error');
+      return;
+    }
+
+    const woffBuffer = ttfToWoff(ttfBuffer);
+    console.log('WOFF generated:', woffBuffer.byteLength, 'bytes');
+
+    // Verify WOFF signature
+    const u8 = new Uint8Array(woffBuffer);
+    const sig = String.fromCharCode(u8[0], u8[1], u8[2], u8[3]);
+    if (sig !== 'wOFF') {
+      throw new Error('WOFF署名が不正: ' + sig);
+    }
+
+    downloadArrayBuffer(woffBuffer, `${fontName}.woff`, 'font/woff');
+    setStatus(`${fontName}.woff (${formatBytes(woffBuffer.byteLength)}) をDLしました`, 'success');
+  } catch (e) {
+    setStatus('WOFFエラー: ' + e.message, 'error');
+    console.error(e);
+  }
+});
+
+function formatBytes(n) {
+  if (n < 1024) return n + 'B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + 'KB';
+  return (n / 1024 / 1024).toFixed(2) + 'MB';
+}
+
+
+// ===== JSX Script Download =====
+const JSX_SCRIPT_BASE64 = "LyoKICogZXhwb3J0X2dseXBoc190b19zdmdfdjQuanN4CiAqCiAqIElsbHVzdHJhdG9y44GnMeabuOS9k+OBtuOCk+OBruaWh+Wtl++8iOaVsOWtlyBvciDmlbDlrZcr44Ki44Or44OV44Kh44OZ44OD44OI77yJ44KS44CBCiAqIDHmloflrZfjgZrjgaRTVkfjgavmm7jjgY3lh7rjgZnjgrnjgq/jg6rjg5fjg4jjgILjgJB2NDog5paH5a2X56iu6YG45oqe5a++5b+c44O7MeODleOCqeODs+ODiOWwgueUqOOAkQogKgogKiDjgJB2M+OBi+OCieOBruWkieabtOeCueOAkQogKiAtIDLmm7jkvZPlkIzmmYLlh6bnkIbjgafjga/jgarjgY8x5pu45L2T5bCC55So44GrCiAqIC0g5pyA5Yid44Gr5paH5a2X56iuKOaVsOWtl+OBruOBvy/mlbDlrZcr5aSn5paH5a2XL+aVsOWtlyvlsI/mloflrZcv5pWw5a2XK+Wkp+WwjynjgpLpgbjmip4KICogLSDphY3nva7jga7liY3mj5DmnaHku7bjgpLjg4DjgqTjgqLjg63jgrDjgafjgqLjg6njg7zjg4jooajnpLoKICogLSDjg5XjgqHjgqTjg6vlkI3jga/oh6rli5XjgafjgZ3jga7mloflrZfjgpLlj43mmKAoMC5zdmcsIEEuc3ZnLCB1cHBlcl9BLnN2ZywgbG93ZXJfYS5zdmcpCiAqCiAqIOOAkOS9v+OBhOaWueOAkQogKiAxLiBJbGx1c3RyYXRvcuOBp+WvvuixoeOBruaWh+WtlyjjgqLjgqbjg4jjg6njgqTjg7PmuIjjgb8p44KS44GZ44G544Gm6YG45oqeCiAqICAgIC0g5pWw5a2X44Gu44G/44Gu5aC05ZCIOiAwMTIzNDU2Nzg5IOOBrumghuOBp+S4puOCk+OBp+OBhOOCi+OBk+OBqAogKiAgICAtICvlpKfmloflrZfjga7loLTlkIg6IDAxMjM0NTY3ODkgLyBBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiDjga7poIYKICogICAgLSAr5bCP5paH5a2X44Gu5aC05ZCIOiAwMTIzNDU2Nzg5IC8gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXog44Gu6aCGCiAqICAgIC0gK+Wkp+Wwj+S4oeaWueOBruWgtOWQiDogMC05IC8gQS1aIC8gYS16IOOBrumghijooYzjgZTjgajjgavkuKbjgpPjgafjgYTjgaZPSykKICogMi4g44OV44Kh44Kk44OrIOKGkiDjgrnjgq/jg6rjg5fjg4gg4oaSIOOBneOBruS7luOBruOCueOCr+ODquODl+ODiC4uLiDjgYvjgonmnKzjg5XjgqHjgqTjg6vjgpLlrp/ooYwKICogMy4g5paH5a2X56iu44KS6YG45oqeCiAqIDQuIOabuOOBjeWHuuOBl+WFiOODleOCqeODq+ODgOOCkumBuOaKngogKiA1LiDmjIflrprmloflrZfjga5TVkfjgYznlJ/miJDjgZXjgozjgosKICovCgooZnVuY3Rpb24gKCkgewogICAgaWYgKGFwcC5kb2N1bWVudHMubGVuZ3RoID09PSAwKSB7CiAgICAgICAgYWxlcnQoIuODieOCreODpeODoeODs+ODiOOBjOmWi+OBi+OCjOOBpuOBhOOBvuOBm+OCk+OAgiIpOwogICAgICAgIHJldHVybjsKICAgIH0KCiAgICB2YXIgc3JjRG9jID0gYXBwLmFjdGl2ZURvY3VtZW50OwogICAgdmFyIHNlbCA9IHNyY0RvYy5zZWxlY3Rpb247CgogICAgaWYgKCFzZWwgfHwgc2VsLmxlbmd0aCA9PT0gMCkgewogICAgICAgIGFsZXJ0KCLlr77osaHjga7mloflrZfjgqrjg5bjgrjjgqfjgq/jg4jjgpLpgbjmip7jgZfjgabjgYvjgonlrp/ooYzjgZfjgabjgY/jgaDjgZXjgYTjgIIiKTsKICAgICAgICByZXR1cm47CiAgICB9CgogICAgLy8gPT09PT0g5paH5a2X56iu6YG45oqe44OA44Kk44Ki44Ot44KwID09PT09CiAgICB2YXIgZGxnID0gbmV3IFdpbmRvdygiZGlhbG9nIiwgIuaWh+Wtl+eoruOCkumBuOaKniIpOwogICAgZGxnLm9yaWVudGF0aW9uID0gImNvbHVtbiI7CiAgICBkbGcuYWxpZ25DaGlsZHJlbiA9ICJmaWxsIjsKICAgIGRsZy5tYXJnaW5zID0gMjA7CgogICAgdmFyIG5vdGVHcm91cCA9IGRsZy5hZGQoInBhbmVsIiwgdW5kZWZpbmVkLCAi5Lim44Gz6aCG44Gu5YmN5o+Q5p2h5Lu2Iik7CiAgICBub3RlR3JvdXAub3JpZW50YXRpb24gPSAiY29sdW1uIjsKICAgIG5vdGVHcm91cC5hbGlnbkNoaWxkcmVuID0gImxlZnQiOwogICAgbm90ZUdyb3VwLm1hcmdpbnMgPSAxNDsKICAgIG5vdGVHcm91cC5hZGQoInN0YXRpY3RleHQiLCB1bmRlZmluZWQsICLkuIvoqJjjga7poIbjgavkuKbjgpPjgafjgYTjgovjgZPjgajjgYzlv4XopoHjgafjgZk6Iik7CiAgICBub3RlR3JvdXAuYWRkKCJzdGF0aWN0ZXh0IiwgdW5kZWZpbmVkLCAiICDjg7vmlbDlrZc6ICAgICAgICAgICAwIDEgMiAzIDQgNSA2IDcgOCA5Iik7CiAgICBub3RlR3JvdXAuYWRkKCJzdGF0aWN0ZXh0IiwgdW5kZWZpbmVkLCAiICDjg7vlpKfmloflrZc6ICAgICAgICBBIEIgQyAuLi4gWCBZIFoiKTsKICAgIG5vdGVHcm91cC5hZGQoInN0YXRpY3RleHQiLCB1bmRlZmluZWQsICIgIOODu+Wwj+aWh+WtlzogICAgICAgIGEgYiBjIC4uLiB4IHkgeiIpOwogICAgbm90ZUdyb3VwLmFkZCgic3RhdGljdGV4dCIsIHVuZGVmaW5lZCwgIiIpOwogICAgbm90ZUdyb3VwLmFkZCgic3RhdGljdGV4dCIsIHVuZGVmaW5lZCwgIuKAuyDopIfmlbDooYzjgavliIbjgYvjgozjgabjgYTjgabjgoJPSyjooYzjgZTjgajjgavkuIrjgYvjgonpoIbjgavlh6bnkIYpIik7CiAgICBub3RlR3JvdXAuYWRkKCJzdGF0aWN0ZXh0IiwgdW5kZWZpbmVkLCAi4oC7IOWkp+aWh+Wtl+Wwj+aWh+Wtl+OCkua3t+WcqOOBleOBm+OCi+WgtOWQiOOAgeihjOOBp+WIhuOBkeOBpuOBj+OBoOOBleOBhCIpOwoKICAgIHZhciB0eXBlUGFuZWwgPSBkbGcuYWRkKCJwYW5lbCIsIHVuZGVmaW5lZCwgIuS9nOaIkOOBmeOCi+aWh+Wtl+OBrueorumhniIpOwogICAgdHlwZVBhbmVsLm9yaWVudGF0aW9uID0gImNvbHVtbiI7CiAgICB0eXBlUGFuZWwuYWxpZ25DaGlsZHJlbiA9ICJsZWZ0IjsKICAgIHR5cGVQYW5lbC5tYXJnaW5zID0gMTQ7CgogICAgdmFyIHJiMSA9IHR5cGVQYW5lbC5hZGQoInJhZGlvYnV0dG9uIiwgdW5kZWZpbmVkLCAi5pWw5a2X44Gu44G/ICgxMOaWh+WtlykiKTsKICAgIHZhciByYjIgPSB0eXBlUGFuZWwuYWRkKCJyYWRpb2J1dHRvbiIsIHVuZGVmaW5lZCwgIuaVsOWtlyArIOOCouODq+ODleOCoeODmeODg+ODiOWkp+aWh+WtlyAoMzbmloflrZcpIik7CiAgICB2YXIgcmIzID0gdHlwZVBhbmVsLmFkZCgicmFkaW9idXR0b24iLCB1bmRlZmluZWQsICLmlbDlrZcgKyDjgqLjg6vjg5XjgqHjg5njg4Pjg4jlsI/mloflrZcgKDM25paH5a2XKSIpOwogICAgdmFyIHJiNCA9IHR5cGVQYW5lbC5hZGQoInJhZGlvYnV0dG9uIiwgdW5kZWZpbmVkLCAi5pWw5a2XICsg44Ki44Or44OV44Kh44OZ44OD44OI5aSn5paH5a2X5bCP5paH5a2XICg2MuaWh+WtlykiKTsKICAgIHJiMS52YWx1ZSA9IHRydWU7CgogICAgLy8g44OV44Kp44Oz44OI5ZCN5YWl5YqbKOWHuuWKm+OCteODluODleOCqeODq+ODgOWQjeOBq+OCguOBquOCiykKICAgIHZhciBuYW1lUGFuZWwgPSBkbGcuYWRkKCJwYW5lbCIsIHVuZGVmaW5lZCwgIuODleOCqeODs+ODiOWQjSjlh7rlipvjg5Xjgqnjg6vjg4DlkI0pIik7CiAgICBuYW1lUGFuZWwub3JpZW50YXRpb24gPSAiY29sdW1uIjsKICAgIG5hbWVQYW5lbC5hbGlnbkNoaWxkcmVuID0gImZpbGwiOwogICAgbmFtZVBhbmVsLm1hcmdpbnMgPSAxNDsKICAgIG5hbWVQYW5lbC5hZGQoInN0YXRpY3RleHQiLCB1bmRlZmluZWQsICLmjIflrprjgZfjgZ/jg5Xjgqnjg6vjg4Djga7kuK3jgavjgIHjgZPjga7lkI3liY3jga7jgrXjg5bjg5Xjgqnjg6vjg4DjgYzkvZzmiJDjgZXjgozjgb7jgZkiKTsKICAgIHZhciBuYW1lSW5wdXQgPSBuYW1lUGFuZWwuYWRkKCJlZGl0dGV4dCIsIHVuZGVmaW5lZCwgIk15Rm9udCIpOwogICAgbmFtZUlucHV0LmNoYXJhY3RlcnMgPSAzMDsKCiAgICB2YXIgYnRuR3JvdXAgPSBkbGcuYWRkKCJncm91cCIpOwogICAgYnRuR3JvdXAuYWxpZ25tZW50ID0gInJpZ2h0IjsKICAgIHZhciBjYW5jZWxCdG4gPSBidG5Hcm91cC5hZGQoImJ1dHRvbiIsIHVuZGVmaW5lZCwgIuOCreODo+ODs+OCu+ODqyIsIHsgbmFtZTogImNhbmNlbCIgfSk7CiAgICB2YXIgb2tCdG4gPSBidG5Hcm91cC5hZGQoImJ1dHRvbiIsIHVuZGVmaW5lZCwgIuasoeOBuCIsIHsgbmFtZTogIm9rIiB9KTsKCiAgICB2YXIgdHlwZUluZGV4ID0gLTE7CiAgICB2YXIgZm9udEZvbGRlck5hbWUgPSAiTXlGb250IjsKICAgIG9rQnRuLm9uQ2xpY2sgPSBmdW5jdGlvbiAoKSB7CiAgICAgICAgaWYgKHJiMS52YWx1ZSkgdHlwZUluZGV4ID0gMDsKICAgICAgICBlbHNlIGlmIChyYjIudmFsdWUpIHR5cGVJbmRleCA9IDE7CiAgICAgICAgZWxzZSBpZiAocmIzLnZhbHVlKSB0eXBlSW5kZXggPSAyOwogICAgICAgIGVsc2UgaWYgKHJiNC52YWx1ZSkgdHlwZUluZGV4ID0gMzsKCiAgICAgICAgLy8g44OV44Kp44Oz44OI5ZCN44Gu44K144OL44K/44Kk44K6KOODleOCoeOCpOODq+WQjeOBq+S9v+OBiOOBquOBhOaWh+Wtl+OCkumZpOWOuykKICAgICAgICB2YXIgbmFtZSA9IG5hbWVJbnB1dC50ZXh0OwogICAgICAgIG5hbWUgPSBuYW1lLnJlcGxhY2UoL1tcXFwvOio/Ijw+fF0vZywgIl8iKTsKICAgICAgICBuYW1lID0gbmFtZS5yZXBsYWNlKC9eXHMrfFxzKyQvZywgIiIpOwogICAgICAgIGlmIChuYW1lID09PSAiIikgbmFtZSA9ICJNeUZvbnQiOwogICAgICAgIGZvbnRGb2xkZXJOYW1lID0gbmFtZTsKCiAgICAgICAgZGxnLmNsb3NlKDEpOwogICAgfTsKICAgIGNhbmNlbEJ0bi5vbkNsaWNrID0gZnVuY3Rpb24gKCkgeyBkbGcuY2xvc2UoMCk7IH07CgogICAgaWYgKGRsZy5zaG93KCkgIT09IDEpIHJldHVybjsKCiAgICAvLyA9PT09PSDmloflrZfnqK7jgavlv5zjgZjjgZ/mnJ/lvoXmloflrZfliJfjgpLmp4vnr4kgPT09PT0KICAgIHZhciBESUdJVFMgPSAiMDEyMzQ1Njc4OSI7CiAgICB2YXIgVVBQRVIgPSAiQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVoiOwogICAgdmFyIExPV0VSID0gImFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6IjsKCiAgICB2YXIgY2hhclNldHM7IC8vIOihjOOBlOOBqOOBruacn+W+heaWh+Wtl+WIl+OBrumFjeWIlwogICAgdmFyIHR5cGVOYW1lOwogICAgc3dpdGNoICh0eXBlSW5kZXgpIHsKICAgICAgICBjYXNlIDA6CiAgICAgICAgICAgIGNoYXJTZXRzID0gW0RJR0lUU107CiAgICAgICAgICAgIHR5cGVOYW1lID0gIuaVsOWtlyI7CiAgICAgICAgICAgIGJyZWFrOwogICAgICAgIGNhc2UgMToKICAgICAgICAgICAgY2hhclNldHMgPSBbRElHSVRTLCBVUFBFUl07CiAgICAgICAgICAgIHR5cGVOYW1lID0gIuaVsOWtlyvlpKfmloflrZciOwogICAgICAgICAgICBicmVhazsKICAgICAgICBjYXNlIDI6CiAgICAgICAgICAgIGNoYXJTZXRzID0gW0RJR0lUUywgTE9XRVJdOwogICAgICAgICAgICB0eXBlTmFtZSA9ICLmlbDlrZcr5bCP5paH5a2XIjsKICAgICAgICAgICAgYnJlYWs7CiAgICAgICAgY2FzZSAzOgogICAgICAgICAgICBjaGFyU2V0cyA9IFtESUdJVFMsIFVQUEVSLCBMT1dFUl07CiAgICAgICAgICAgIHR5cGVOYW1lID0gIuaVsOWtlyvlpKfmloflrZcr5bCP5paH5a2XIjsKICAgICAgICAgICAgYnJlYWs7CiAgICB9CgogICAgdmFyIHRvdGFsRXhwZWN0ZWQgPSAwOwogICAgZm9yICh2YXIgaSA9IDA7IGkgPCBjaGFyU2V0cy5sZW5ndGg7IGkrKykgdG90YWxFeHBlY3RlZCArPSBjaGFyU2V0c1tpXS5sZW5ndGg7CgogICAgaWYgKHNlbC5sZW5ndGggIT09IHRvdGFsRXhwZWN0ZWQpIHsKICAgICAgICB2YXIgbXNnID0gIumBuOaKnuaVsDogIiArIHNlbC5sZW5ndGggKyAiIOWAi1xuIjsKICAgICAgICBtc2cgKz0gIuacn+W+heWApDogIiArIHRvdGFsRXhwZWN0ZWQgKyAiIOWAiyAoIiArIHR5cGVOYW1lICsgIilcblxuIjsKICAgICAgICBtc2cgKz0gIuOBk+OBruOBvuOBvue2muihjOOBmeOCi+WgtOWQiOOAgeS4iuOBi+OCiemghuOBq+aMr+OCiuWIhuOBkeOBvuOBmeOBjOOAgemBjuS4jei2s+OBr+WVj+mhjOOBq+OBquOCiuOBvuOBmeOAglxuIjsKICAgICAgICBtc2cgKz0gIue2muihjOOBl+OBvuOBmeOBiz8iOwogICAgICAgIGlmICghY29uZmlybShtc2cpKSByZXR1cm47CiAgICB9CgogICAgLy8gPT09PT0g5pu444GN5Ye644GX5YWI44OV44Kp44Or44OA6YG45oqeID09PT09CiAgICB2YXIgcGFyZW50RGlyID0gRm9sZGVyLnNlbGVjdERpYWxvZygi5pu444GN5Ye644GX5YWI44Gu44OV44Kp44Or44OA44KS6YG45oqe44GX44Gm44GP44Gg44GV44GEXG4o44GT44Gu5Lit44Gr44CMIiArIGZvbnRGb2xkZXJOYW1lICsgIuOAjeODleOCqeODq+ODgOOBjOS9nOaIkOOBleOCjOOBvuOBmSkiKTsKICAgIGlmICghcGFyZW50RGlyKSByZXR1cm47CgogICAgLy8g44K144OW44OV44Kp44Or44OA5L2c5oiQKOaXouWtmOOBquOCieS9v+OBhikKICAgIHZhciBvdXREaXIgPSBuZXcgRm9sZGVyKHBhcmVudERpci5mc05hbWUgKyAiLyIgKyBmb250Rm9sZGVyTmFtZSk7CiAgICBpZiAoIW91dERpci5leGlzdHMpIHsKICAgICAgICBpZiAoIW91dERpci5jcmVhdGUoKSkgewogICAgICAgICAgICBhbGVydCgi5Ye65Yqb44OV44Kp44Or44OA44Gu5L2c5oiQ44Gr5aSx5pWX44GX44G+44GX44GfOlxuIiArIG91dERpci5mc05hbWUpOwogICAgICAgICAgICByZXR1cm47CiAgICAgICAgfQogICAgfSBlbHNlIHsKICAgICAgICAvLyDml6LlrZjjga7loLTlkIjjga/norroqo0KICAgICAgICBpZiAoIWNvbmZpcm0oIuODleOCqeODq+ODgOOAjCIgKyBmb250Rm9sZGVyTmFtZSArICLjgI3jga/ml6LjgavlrZjlnKjjgZfjgb7jgZnjgIJcbuS4reOBruODleOCoeOCpOODq+OCkuS4iuabuOOBjeOBmeOCi+WPr+iDveaAp+OBjOOBguOCiuOBvuOBmeOAgue2muihjOOBl+OBvuOBmeOBiz8iKSkgewogICAgICAgICAgICByZXR1cm47CiAgICAgICAgfQogICAgfQoKICAgIC8vID09PT09IOmBuOaKnuOCkumAgOmBv+ODu+W6p+aomeOCkuioiOeulyA9PT09PQogICAgdmFyIGl0ZW1zID0gW107CiAgICBmb3IgKHZhciBqID0gMDsgaiA8IHNlbC5sZW5ndGg7IGorKykgaXRlbXMucHVzaChzZWxbal0pOwoKICAgIGZvciAodmFyIGsgPSAwOyBrIDwgaXRlbXMubGVuZ3RoOyBrKyspIHsKICAgICAgICB2YXIgYiA9IGl0ZW1zW2tdLnZpc2libGVCb3VuZHM7CiAgICAgICAgaXRlbXNba10uX2N5ID0gKGJbMV0gKyBiWzNdKSAvIDI7CiAgICAgICAgaXRlbXNba10uX2N4ID0gKGJbMF0gKyBiWzJdKSAvIDI7CiAgICB9CgogICAgLy8gPT09PT0g6KGMKFnjgq/jg6njgrnjgr8p44KS5qSc5Ye6ID09PT09CiAgICAvLyDooYzmlbAgPSBjaGFyU2V0cy5sZW5ndGgg44GM5YiG44GL44Gj44Gm44GE44KL44Gu44Gn44CBWeW6p+aomeOBp+OCr+ODqeOCueOCv+ODquODs+OCsAogICAgLy8g5Y2Y57SU5YyWOiDkuK3lv4NZ44Gn44K944O844OIIOKGkiDlpKfjgY3jgarnuKbjgq7jg6Pjg4Pjg5fjgafliIfjgosKICAgIGl0ZW1zLnNvcnQoZnVuY3Rpb24gKGEsIGIpIHsgcmV0dXJuIGIuX2N5IC0gYS5fY3k7IH0pOyAvLyDkuIrjgYvjgonkuIvjgbgoWeOBr+S4iuOBjOWkpykKCiAgICAvLyDjgq7jg6Pjg4Pjg5fplr7lgKQ6IOWFqOOCouOCpOODhuODoOOBruW5s+Wdh+mrmOOBleOBriAxLjXlgI0KICAgIHZhciB0b3RhbEggPSAwOwogICAgZm9yICh2YXIgbSA9IDA7IG0gPCBpdGVtcy5sZW5ndGg7IG0rKykgewogICAgICAgIHZhciB2YiA9IGl0ZW1zW21dLnZpc2libGVCb3VuZHM7CiAgICAgICAgdG90YWxIICs9ICh2YlsxXSAtIHZiWzNdKTsgLy8g6auY44GVCiAgICB9CiAgICB2YXIgYXZnSCA9IHRvdGFsSCAvIGl0ZW1zLmxlbmd0aDsKICAgIHZhciBnYXBUaHJlc2hvbGQgPSBhdmdIICogMS4wOyAvLyDmloflrZfpq5jjgZXjgbbjgpPnqbrjgYTjgabjgYTjgZ/jgonliKXjga7ooYzjgajjgb/jgarjgZkKCiAgICB2YXIgcm93cyA9IFtdOwogICAgdmFyIGN1cnJlbnRSb3cgPSBbaXRlbXNbMF1dOwogICAgZm9yICh2YXIgbiA9IDE7IG4gPCBpdGVtcy5sZW5ndGg7IG4rKykgewogICAgICAgIHZhciBwcmV2Q3kgPSBpdGVtc1tuIC0gMV0uX2N5OwogICAgICAgIHZhciBjdXJDeSA9IGl0ZW1zW25dLl9jeTsKICAgICAgICB2YXIgZ2FwID0gcHJldkN5IC0gY3VyQ3k7CiAgICAgICAgaWYgKGdhcCA+IGdhcFRocmVzaG9sZCkgewogICAgICAgICAgICByb3dzLnB1c2goY3VycmVudFJvdyk7CiAgICAgICAgICAgIGN1cnJlbnRSb3cgPSBbXTsKICAgICAgICB9CiAgICAgICAgY3VycmVudFJvdy5wdXNoKGl0ZW1zW25dKTsKICAgIH0KICAgIGlmIChjdXJyZW50Um93Lmxlbmd0aCA+IDApIHJvd3MucHVzaChjdXJyZW50Um93KTsKCiAgICAvLyDlkITooYzjgpIgWOW6p+aomSDmmIfpoIbjgafjgr3jg7zjg4gKICAgIHZhciBzb3J0QnlYID0gZnVuY3Rpb24gKGEsIGIpIHsgcmV0dXJuIGEuX2N4IC0gYi5fY3g7IH07CiAgICBmb3IgKHZhciBwID0gMDsgcCA8IHJvd3MubGVuZ3RoOyBwKyspIHsKICAgICAgICByb3dzW3BdLnNvcnQoc29ydEJ5WCk7CiAgICB9CgogICAgLy8g6KGM5pWw44GM5pyf5b6F44Go55Ww44Gq44KL5aC05ZCI44Gv6K2m5ZGKCiAgICBpZiAocm93cy5sZW5ndGggIT09IGNoYXJTZXRzLmxlbmd0aCkgewogICAgICAgIHZhciBtc2cyID0gIuaknOWHuuOBleOCjOOBn+ihjOaVsDogIiArIHJvd3MubGVuZ3RoICsgIlxuIjsKICAgICAgICBtc2cyICs9ICLmnJ/lvoXjgZXjgozjgovooYzmlbA6ICIgKyBjaGFyU2V0cy5sZW5ndGggKyAiXG5cbiI7CiAgICAgICAgbXNnMiArPSAi6YWN572u44KS56K66KqN44GX44Gm44GP44Gg44GV44GEKOihjOOBjOato+OBl+OBj+WIhuOBi+OCjOOBpuOBhOOCi+OBiynjgIJcbiI7CiAgICAgICAgbXNnMiArPSAi57aa6KGM44GZ44KL5aC05ZCI44CB5qSc5Ye644GV44KM44Gf6KGM44Gr5LiK44GL44KJ6aCG55Wq44Gr5paH5a2X44KS5Ymy44KK5b2T44Gm44G+44GZ44CCIjsKICAgICAgICBpZiAoIWNvbmZpcm0obXNnMikpIHJldHVybjsKICAgIH0KCiAgICAvLyA9PT09PSDlkITooYzjga7jgqLjgqTjg4bjg6DjgavmloflrZfjgpLlibLjgorlvZPjgabjgosgPT09PT0KICAgIC8vIGFzc2lnbm1lbnRzOiBbeyBpdGVtLCBjaGFyYWN0ZXIsIGZpbGVuYW1lIH0sIC4uLl0KICAgIHZhciBhc3NpZ25tZW50cyA9IFtdOwogICAgZm9yICh2YXIgcSA9IDA7IHEgPCBNYXRoLm1pbihyb3dzLmxlbmd0aCwgY2hhclNldHMubGVuZ3RoKTsgcSsrKSB7CiAgICAgICAgdmFyIHJvdyA9IHJvd3NbcV07CiAgICAgICAgdmFyIGNoYXJzID0gY2hhclNldHNbcV07CiAgICAgICAgZm9yICh2YXIgciA9IDA7IHIgPCBNYXRoLm1pbihyb3cubGVuZ3RoLCBjaGFycy5sZW5ndGgpOyByKyspIHsKICAgICAgICAgICAgdmFyIGNoID0gY2hhcnMuY2hhckF0KHIpOwogICAgICAgICAgICB2YXIgZm5hbWU7CiAgICAgICAgICAgIC8vIOODleOCoeOCpOODq+WQjeOBruODq+ODvOODqzog5pWw5a2X44Go5aSn5paH5a2X44Gv44Gd44Gu44G+44G+44CB5bCP5paH5a2X44KC5ZCr44KA5re35Zyo5pmC44Gv5o6l6aCt6L6e5LuY44GNCiAgICAgICAgICAgIGlmICh0eXBlSW5kZXggPT09IDMgJiYgcSA9PT0gMSkgewogICAgICAgICAgICAgICAgLy8g5aSn5paH5a2X6KGMCiAgICAgICAgICAgICAgICBmbmFtZSA9ICJ1cHBlcl8iICsgY2ggKyAiLnN2ZyI7CiAgICAgICAgICAgIH0gZWxzZSBpZiAodHlwZUluZGV4ID09PSAzICYmIHEgPT09IDIpIHsKICAgICAgICAgICAgICAgIC8vIOWwj+aWh+Wtl+ihjAogICAgICAgICAgICAgICAgZm5hbWUgPSAibG93ZXJfIiArIGNoICsgIi5zdmciOwogICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgICAgZm5hbWUgPSBjaCArICIuc3ZnIjsKICAgICAgICAgICAgfQogICAgICAgICAgICBhc3NpZ25tZW50cy5wdXNoKHsgaXRlbTogcm93W3JdLCBjaGFyYWN0ZXI6IGNoLCBmaWxlbmFtZTogZm5hbWUgfSk7CiAgICAgICAgfQogICAgfQoKICAgIGlmIChhc3NpZ25tZW50cy5sZW5ndGggPT09IDApIHsKICAgICAgICBhbGVydCgi5pu444GN5Ye644GZ5a++6LGh44GM44GC44KK44G+44Gb44KT44CCIik7CiAgICAgICAgcmV0dXJuOwogICAgfQoKICAgIC8vID09PT09IOihjOOBlOOBqOOBq+S4iuS4i+err+OCkuioiOeulyjjg5njg7zjgrnjg6njgqTjg7Pmj4PjgYjnlKgpID09PT09CiAgICAvLyDmlbDlrZfjg7vlpKfmloflrZfjg7vlsI/mloflrZfjga/jgZ3jgozjgZ7jgozpq5jjgZXjga7ln7rmupbjgYznlbDjgarjgosoeC1oZWlnaHQsIGNhcC1oZWlnaHTjgarjgakp44Gu44GnCiAgICAvLyDooYzlhoXjgafmj4PjgYjjgovmlrnjgYznhKHpp4TjgarkvZnnmb3jgYzlh7rjgarjgYTjgIIKICAgIC8vIOWQhGFzc2lnbm1lbnTjgavjgIzjgZ3jga7ooYzjga7kuIrkuIvnq6/jgI3jgpLmjIHjgZ/jgZvjgovjgIIKICAgIGZvciAodmFyIHEyID0gMDsgcTIgPCBNYXRoLm1pbihyb3dzLmxlbmd0aCwgY2hhclNldHMubGVuZ3RoKTsgcTIrKykgewogICAgICAgIHZhciByb3dJdGVtcyA9IHJvd3NbcTJdOwogICAgICAgIHZhciByb3dUb3AgPSAtSW5maW5pdHksIHJvd0JvdHRvbSA9IEluZmluaXR5OwogICAgICAgIGZvciAodmFyIHMgPSAwOyBzIDwgcm93SXRlbXMubGVuZ3RoOyBzKyspIHsKICAgICAgICAgICAgdmFyIHZiMiA9IHJvd0l0ZW1zW3NdLnZpc2libGVCb3VuZHM7CiAgICAgICAgICAgIGlmICh2YjJbMV0gPiByb3dUb3ApIHJvd1RvcCA9IHZiMlsxXTsKICAgICAgICAgICAgaWYgKHZiMlszXSA8IHJvd0JvdHRvbSkgcm93Qm90dG9tID0gdmIyWzNdOwogICAgICAgIH0KICAgICAgICAvLyDjgZPjga7ooYzjgavlr77lv5zjgZnjgothc3NpZ25tZW5044Gr6KGM5oOF5aCx44KS44K744OD44OICiAgICAgICAgZm9yICh2YXIgdDIgPSAwOyB0MiA8IGFzc2lnbm1lbnRzLmxlbmd0aDsgdDIrKykgewogICAgICAgICAgICBmb3IgKHZhciB1MiA9IDA7IHUyIDwgcm93SXRlbXMubGVuZ3RoOyB1MisrKSB7CiAgICAgICAgICAgICAgICBpZiAoYXNzaWdubWVudHNbdDJdLml0ZW0gPT09IHJvd0l0ZW1zW3UyXSkgewogICAgICAgICAgICAgICAgICAgIGFzc2lnbm1lbnRzW3QyXS5yb3dUb3AgPSByb3dUb3A7CiAgICAgICAgICAgICAgICAgICAgYXNzaWdubWVudHNbdDJdLnJvd0JvdHRvbSA9IHJvd0JvdHRvbTsKICAgICAgICAgICAgICAgICAgICBicmVhazsKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KCiAgICAvLyA9PT09PSBTVkfmm7jjgY3lh7rjgZfjgqrjg5fjgrfjg6fjg7MgPT09PT0KICAgIHZhciBleHBvcnRPcHRzID0gbmV3IEV4cG9ydE9wdGlvbnNTVkcoKTsKICAgIGV4cG9ydE9wdHMuZW1iZWRSYXN0ZXJJbWFnZXMgPSBmYWxzZTsKICAgIGV4cG9ydE9wdHMuZm9udFN1YnNldHRpbmcgPSBTVkdGb250U3Vic2V0dGluZy5Ob25lOwogICAgZXhwb3J0T3B0cy5jb29yZGluYXRlUHJlY2lzaW9uID0gMzsKICAgIGV4cG9ydE9wdHMuZG9jdW1lbnRFbmNvZGluZyA9IFNWR0RvY3VtZW50RW5jb2RpbmcuVVRGODsKICAgIGV4cG9ydE9wdHMuY3NzUHJvcGVydGllcyA9IFNWR0NTU1Byb3BlcnR5TG9jYXRpb24uUFJFU0VOVEFUSU9OQVRUUklCVVRFUzsKCiAgICB2YXIgZXhwb3J0ZWRDb3VudCA9IDA7CiAgICB2YXIgZXJyb3JzID0gW107CgogICAgLy8gMeOCsOODquODleOCkuWNmOeLrFNWR+OBqOOBl+OBpuabuOOBjeWHuuOBmQogICAgdmFyIGV4cG9ydFNpbmdsZUdseXBoID0gZnVuY3Rpb24gKGl0ZW0sIG91dEZpbGUsIGxhYmVsLCByb3dUb3AsIHJvd0JvdHRvbSkgewogICAgICAgIHZhciB2YiA9IGl0ZW0udmlzaWJsZUJvdW5kczsKICAgICAgICB2YXIgZ2x5cGhMZWZ0ID0gdmJbMF07CiAgICAgICAgdmFyIGdseXBoUmlnaHQgPSB2YlsyXTsKCiAgICAgICAgdmFyIHRlbXBXaWR0aCA9IGdseXBoUmlnaHQgLSBnbHlwaExlZnQ7CiAgICAgICAgdmFyIHRlbXBIZWlnaHQgPSByb3dUb3AgLSByb3dCb3R0b207CgogICAgICAgIGlmICh0ZW1wV2lkdGggPD0gMCB8fCB0ZW1wSGVpZ2h0IDw9IDApIHsKICAgICAgICAgICAgZXJyb3JzLnB1c2gobGFiZWwgKyAiIDog5LiN5q2j44Gq44K144Kk44K6KFc6IiArIHRlbXBXaWR0aCArICIsIEg6IiArIHRlbXBIZWlnaHQgKyAiKSIpOwogICAgICAgICAgICByZXR1cm47CiAgICAgICAgfQoKICAgICAgICB2YXIgdGVtcERvYzsKICAgICAgICB0cnkgewogICAgICAgICAgICB0ZW1wRG9jID0gYXBwLmRvY3VtZW50cy5hZGQoCiAgICAgICAgICAgICAgICBEb2N1bWVudENvbG9yU3BhY2UuUkdCLAogICAgICAgICAgICAgICAgdGVtcFdpZHRoLAogICAgICAgICAgICAgICAgdGVtcEhlaWdodAogICAgICAgICAgICApOwogICAgICAgIH0gY2F0Y2ggKGUpIHsKICAgICAgICAgICAgZXJyb3JzLnB1c2gobGFiZWwgKyAiIDog5LiA5pmC44OJ44Kt44Ol44Oh44Oz44OI5L2c5oiQ5aSx5pWXIC0gIiArIGUpOwogICAgICAgICAgICByZXR1cm47CiAgICAgICAgfQoKICAgICAgICB0cnkgewogICAgICAgICAgICBhcHAuYWN0aXZlRG9jdW1lbnQgPSBzcmNEb2M7CiAgICAgICAgICAgIHNyY0RvYy5zZWxlY3Rpb24gPSBudWxsOwogICAgICAgICAgICBpdGVtLnNlbGVjdGVkID0gdHJ1ZTsKCiAgICAgICAgICAgIHZhciBkdXAgPSBpdGVtLmR1cGxpY2F0ZSh0ZW1wRG9jLmxheWVyc1swXSwgRWxlbWVudFBsYWNlbWVudC5QTEFDRUFUQkVHSU5OSU5HKTsKCiAgICAgICAgICAgIGFwcC5hY3RpdmVEb2N1bWVudCA9IHRlbXBEb2M7CiAgICAgICAgICAgIHZhciBhYiA9IHRlbXBEb2MuYXJ0Ym9hcmRzWzBdLmFydGJvYXJkUmVjdDsKICAgICAgICAgICAgdmFyIGFiTGVmdCA9IGFiWzBdOwogICAgICAgICAgICB2YXIgYWJUb3AgPSBhYlsxXTsKCiAgICAgICAgICAgIHZhciBkdXBCb3VuZHMgPSBkdXAudmlzaWJsZUJvdW5kczsKICAgICAgICAgICAgdmFyIHRvcE9mZnNldCA9IHJvd1RvcCAtIHZiWzFdOwoKICAgICAgICAgICAgdmFyIHRhcmdldExlZnQgPSBhYkxlZnQ7CiAgICAgICAgICAgIHZhciB0YXJnZXRUb3AgPSBhYlRvcCAtIHRvcE9mZnNldDsKCiAgICAgICAgICAgIHZhciBkeCA9IHRhcmdldExlZnQgLSBkdXBCb3VuZHNbMF07CiAgICAgICAgICAgIHZhciBkeSA9IHRhcmdldFRvcCAtIGR1cEJvdW5kc1sxXTsKICAgICAgICAgICAgZHVwLnRyYW5zbGF0ZShkeCwgZHkpOwoKICAgICAgICAgICAgdGVtcERvYy5leHBvcnRGaWxlKG91dEZpbGUsIEV4cG9ydFR5cGUuU1ZHLCBleHBvcnRPcHRzKTsKICAgICAgICAgICAgZXhwb3J0ZWRDb3VudCsrOwogICAgICAgIH0gY2F0Y2ggKGUyKSB7CiAgICAgICAgICAgIGVycm9ycy5wdXNoKGxhYmVsICsgIiA6IOabuOOBjeWHuuOBl+WkseaVlyAtICIgKyBlMik7CiAgICAgICAgfQoKICAgICAgICB0cnkgewogICAgICAgICAgICB0ZW1wRG9jLmNsb3NlKFNhdmVPcHRpb25zLkRPTk9UU0FWRUNIQU5HRVMpOwogICAgICAgIH0gY2F0Y2ggKGUzKSB7IC8qIG5vb3AgKi8gfQogICAgfTsKCiAgICAvLyA9PT09PSDmm7jjgY3lh7rjgZflrp/ooYwgPT09PT0KICAgIGZvciAodmFyIHQgPSAwOyB0IDwgYXNzaWdubWVudHMubGVuZ3RoOyB0KyspIHsKICAgICAgICB2YXIgYSA9IGFzc2lnbm1lbnRzW3RdOwogICAgICAgIHZhciBvdXRGaWxlID0gbmV3IEZpbGUob3V0RGlyLmZzTmFtZSArICIvIiArIGEuZmlsZW5hbWUpOwogICAgICAgIGV4cG9ydFNpbmdsZUdseXBoKGEuaXRlbSwgb3V0RmlsZSwgYS5maWxlbmFtZSwgYS5yb3dUb3AsIGEucm93Qm90dG9tKTsKICAgIH0KCiAgICAvLyDlhYPjg4njgq3jg6Xjg6Hjg7Pjg4jjgpLjgqLjgq/jg4bjgqPjg5bjgavmiLvjgZfjgabpgbjmip7lvqnlhYMKICAgIGFwcC5hY3RpdmVEb2N1bWVudCA9IHNyY0RvYzsKICAgIHNyY0RvYy5zZWxlY3Rpb24gPSBudWxsOwogICAgZm9yICh2YXIgdSA9IDA7IHUgPCBpdGVtcy5sZW5ndGg7IHUrKykgaXRlbXNbdV0uc2VsZWN0ZWQgPSB0cnVlOwoKICAgIC8vID09PT09IOe1kOaenOmAmuefpSA9PT09PQogICAgdmFyIHJlcG9ydCA9ICLmm7jjgY3lh7rjgZflrozkuoY6ICIgKyBleHBvcnRlZENvdW50ICsgIiAvICIgKyBhc3NpZ25tZW50cy5sZW5ndGggKyAiIOWAi1xuIjsKICAgIHJlcG9ydCArPSAi56iu6aGeOiAiICsgdHlwZU5hbWUgKyAiXG4iOwogICAgcmVwb3J0ICs9ICLjg5Xjgqnjg6vjg4DlkI06ICIgKyBmb250Rm9sZGVyTmFtZSArICJcbiI7CiAgICByZXBvcnQgKz0gIuWHuuWKm+WFiDogIiArIG91dERpci5mc05hbWUgKyAiXG4iOwogICAgaWYgKGVycm9ycy5sZW5ndGggPiAwKSB7CiAgICAgICAgcmVwb3J0ICs9ICJcbuOCqOODqeODvDpcbiIgKyBlcnJvcnMuam9pbigiXG4iKTsKICAgIH0KICAgIGFsZXJ0KHJlcG9ydCk7Cn0pKCk7Cg==";
+const JSX_FILENAME = "export_glyphs_to_svg_v4.jsx";
+
+function downloadJsx() {
+  // Decode base64 to binary
+  const binaryString = atob(JSX_SCRIPT_BASE64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = JSX_FILENAME;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Bind after DOM is ready
+const jsxBtn = document.getElementById('downloadJsxBtn');
+if (jsxBtn) jsxBtn.addEventListener('click', downloadJsx);
+
+</script>
+
+</body>
+</html>
