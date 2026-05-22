@@ -1,4 +1,4 @@
-# Illustrator to WebFont Generator
+# Illustrator WebFont Maker
 
 Illustratorのアウトライン文字をSVG経由でWebフォント化する半自動化ツールです。
 Illustrator用JSXスクリプトで1文字ずつSVGを書き出し、`index.html` 上で文字割り当てとWOFF/TTF生成を行います。
