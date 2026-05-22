@@ -1,7 +1,9 @@
-# SVG to WebFont Generator
+# Illustrator to WebFont Generator
 
-SVGグリフからWebフォントを生成する、ブラウザ完結型の変換ツールです。
-Illustrator用のJSXスクリプトで文字ごとのSVGを書き出し、`index.html` 上でWOFF/TTFに変換できます。
+Illustratorのアウトライン文字をSVG経由でWebフォント化する半自動化ツールです。
+Illustrator用JSXスクリプトで1文字ずつSVGを書き出し、`index.html` 上で文字割り当てとWOFF/TTF生成を行います。
+
+SVGファイルがすでに用意されている場合は、Illustratorを使わずにSVGから直接Webフォント化することもできます。
 
 ## 構成
 
@@ -9,6 +11,13 @@ Illustrator用のJSXスクリプトで文字ごとのSVGを書き出し、`index
 - `export_glyphs_to_svg_v4.jsx`: Illustrator上のアウトライン済み文字を、1文字ずつSVGに書き出すスクリプト
 
 ## 使い方
+
+### 全体の流れ
+
+1. Illustratorで文字をアウトライン化し、JSXスクリプトで文字ごとのSVGを書き出します。
+2. 書き出したSVGを `index.html` にインポートします。
+3. 各SVGに割り当てる1文字を入力します。ファイル名からの自動割り当てもできます。
+4. プレビューで確認し、TTFまたはWOFFをダウンロードします。
 
 ### 1. Illustratorで文字を準備する
 
@@ -64,4 +73,3 @@ Illustrator用のJSXスクリプトで文字ごとのSVGを書き出し、`index
 - `index.html` は `opentype.js` と `pako` をCDNから読み込みます。WOFF/TTF生成にはネットワーク接続が必要です。
 - SVG内にアウトラインパスが含まれている必要があります。Illustratorで文字データのまま書き出したSVGは、期待通りに変換できない場合があります。
 - ベースラインや文字サイズが揃っていない場合、生成後のフォントでも表示位置にばらつきが出ます。
-
